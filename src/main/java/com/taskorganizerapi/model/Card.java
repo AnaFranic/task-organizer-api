@@ -3,28 +3,25 @@ package com.taskorganizerapi.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
-public class CardList {
+public class Card {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     public int id;
     public String name;
+    public String text;
 
     @ManyToOne
-    @JoinColumn(name="board_id")
+    @JoinColumn(name="cardList_id")
     @JsonIgnore
-    public Board board;
+    public CardList cardList;
 
-    @OneToMany(mappedBy = "cardList", cascade = CascadeType.ALL)
-    public List<Card> cards = new ArrayList<>();
-
-    public CardList() {
+    public Card(){
     }
-    public CardList(int id, String name) {
+    public Card(int id, String name, String text){
         this.id = id;
         this.name = name;
+        this.text = text;
     }
 }

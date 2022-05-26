@@ -1,9 +1,11 @@
 package com.taskorganizerapi.controller;
 
 import com.taskorganizerapi.model.Board;
+import com.taskorganizerapi.model.Card;
 import com.taskorganizerapi.model.CardList;
 import com.taskorganizerapi.repo.BoardRepo;
 import com.taskorganizerapi.repo.CardListRepo;
+import com.taskorganizerapi.repo.CardRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +21,9 @@ public class TaskController {
     @Autowired
     CardListRepo cardListRepo;
 
+    @Autowired
+    CardRepo cardRepo;
+
     /* BOARD MAPPING */
     @GetMapping("/getBoards")
     public Iterable<Board> getBoards() {
@@ -32,9 +37,13 @@ public class TaskController {
     }
 
     @PostMapping("/createBoard")
-    public Board createBoard(@RequestBody Board board)
+    public Optional<Board> createBoard(@RequestBody Board board)
     {
-        return boardRepo.save(board);
+        Board newBoard = boardRepo.save(board);
+        createCardList(newBoard.id, new CardList(0, "To Do"));
+        createCardList(newBoard.id, new CardList(0, "Doing"));
+        createCardList(newBoard.id, new CardList(0, "Done"));
+        return boardRepo.findById(newBoard.id);
     }
 
     @PostMapping("/updateBoard")
@@ -50,12 +59,6 @@ public class TaskController {
     }
 
     /* CARD LIST MAPPING */
-    @GetMapping("/getCardList")
-    public Optional<CardList> getCardList(@RequestParam int id)
-    {
-        return cardListRepo.findById(id);
-    }
-
     @PostMapping("/createCardList")
     public CardList createCardList(@RequestParam int boardId, @RequestBody CardList cardList)
     {
@@ -84,5 +87,36 @@ public class TaskController {
     public void deleteCardList(@RequestParam int id)
     {
         cardListRepo.deleteById(id);
+    }
+
+    /* CARD MAPPING */
+    @PostMapping("/createCard")
+    public Card createCard(@RequestParam int cardListId, @RequestBody Card card)
+    {
+        Optional<CardList> cardList = cardListRepo.findById(cardListId);
+        if (!cardList.isPresent()) {
+            // throw error
+            return null;
+        }
+        card.cardList = cardList.get();
+        return cardRepo.save(card);
+    }
+
+    @PostMapping("/updateCard")
+    public Card updateCard(@RequestBody Card card)
+    {
+        Optional<Card> oldCard = cardRepo.findById(card.id);
+        if (!oldCard.isPresent()) {
+            // throw error
+            return null;
+        }
+        card.cardList = oldCard.get().cardList;
+        return cardRepo.save(card);
+    }
+
+    @DeleteMapping("/deleteCard")
+    public void deleteCard(@RequestParam int id)
+    {
+        cardRepo.deleteById(id);
     }
 }
